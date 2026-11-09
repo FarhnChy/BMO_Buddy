@@ -1,14 +1,49 @@
 # BMO Fridge Buddy
 
-BMO Fridge Buddy is a Raspberry Pi project that turns a mini fridge into a
-simple smart fridge monitor inspired by BMO from *Adventure Time*.
+BMO Fridge Buddy gives a mini fridge an animated BMO-inspired face, live
+temperature monitoring, and a phone-friendly food inventory interface.
+Built with a Raspberry Pi 5, a waterproof DS18B20 probe, a 128 x 64 I2C OLED,
+Python, Flask, and SQLite.
 
-I wanted to build this project to learn more about Raspberry Pi hardware,
-Python, sensors, displays, databases, and working with real electronic
-components. It also gives the mini fridge a fun BMO-style face while making it
-more useful.
+## Hardware demo
 
-The finished project will:
+**[Watch or download the recorded startup and hardware demo](docs/media/bmo-hardware-demo.mov)**
+
+The recording captures the physical prototype. Depending on the browser,
+the MOV file may download instead of playing inline.
+
+### Temperature expressions on real hardware
+
+| Normal: 35.3 F | Warm: 41.7 F | Cold: 27.5 F |
+|:---:|:---:|:---:|
+| <img src="docs/media/oled-normal.jpg" alt="OLED showing a smiling BMO face and 35.3 F Normal" width="240"> | <img src="docs/media/oled-warm.jpg" alt="OLED showing a worried BMO face and 41.7 F Warm" width="240"> | <img src="docs/media/oled-cold.jpg" alt="OLED showing a zigzag mouth and 27.5 F C-C-Cold" width="240"> |
+
+### Hardware connections
+
+| Raspberry Pi 5 | Temperature probe adapter |
+|:---:|:---:|
+| <img src="docs/media/hardware-pi.jpg" alt="Powered Raspberry Pi in an open case with cooling fan and connected GPIO jumper wires" width="300"> | <img src="docs/media/probe-adapter.jpg" alt="Plug-in temperature probe adapter with GND DAT and VCC labels and connected wires" width="300"> |
+
+The Pi and adapter stay outside the fridge; only the waterproof metal probe
+goes inside. These photos document the prototype, not a pin-by-pin wiring guide;
+see [setup and wiring instructions](TODO.md#oled-wiring) for the connections.
+
+**Verified on the Pi:** sensor detection and valid readings, response to
+warming and cooling, OLED communication at I2C address `0x3C`, startup
+animation, blinking, and temperature-dependent expressions. The photos above
+show all three temperature bands on the physical OLED.
+
+**Next validation:** exercise the phone inventory workflow on a real phone,
+inspect the logged temperature graph, and complete an extended fridge run.
+The probe has not yet been checked against a reference thermometer.
+
+## What I built
+
+I built this project to connect embedded hardware with a useful application:
+read a physical sensor, animate a constrained display, persist inventory and
+temperature data, and expose food tracking through a local web interface.
+
+The software implements:
 
 - Read the fridge temperature with a Gikfun EK1183 waterproof DS18B20 probe and
   adapter module.
@@ -23,6 +58,37 @@ The finished project will:
 - Graph recent temperature history with a highlighted 32-40 F safe band.
 - Give BMO sleepy, happy, cold, and worried expressions based on temperature.
 
+## How it works
+
+```mermaid
+flowchart LR
+    Probe[DS18B20 probe] -->|1-Wire / GPIO4| Monitor[Python hardware monitor]
+    Monitor -->|I2C| OLED[Animated OLED face]
+    Monitor --> CSV[Temperature CSV]
+    Phone[Phone browser] <-->|Local Wi-Fi| Web[Flask web app]
+    Web <--> DB[(SQLite inventory)]
+    Web -->|Read history| CSV
+    Web -->|Product lookup| OFF[Open Food Facts]
+    Scanner[Optional USB barcode scanner] --> Monitor
+    Monitor <--> DB
+```
+
+The OLED shows just the face, temperature, and a short status. Inventory and
+longer messages belong in the phone interface and terminal because the screen
+is only 128 x 64 pixels. Sensor conversion runs in a separate thread so the
+display can animate while a temperature read waits for the probe.
+
+| Reading | OLED behavior |
+|---|---|
+| Startup | Closed eyes, then open eyes; `BMO waking up...` |
+| Below 32 F | Zigzag mouth and `C-C-Cold`; brief `Brrr!` reaction on entering cold |
+| 32-40 F | Smiling face and `Normal` |
+| Above 40 F | Worried face and `Warm` |
+| Sensor unavailable | Sleepy face and `No sensor` |
+
+These are configured temperature bands, not a determination of whether an
+individual food is safe. Quantity and expiration tracking depend on user input.
+
 The main application is [bmo_fridge.py](bmo_fridge.py). Current progress,
 remaining setup, wiring, testing, and update instructions are in
 [TODO.md](TODO.md).
@@ -33,8 +99,15 @@ The phone-friendly web app can scan a product barcode, look up its name with
 Open Food Facts, save quantity and expiration date, list the fridge inventory,
 remove items, and graph temperature history. Different expiration dates are
 kept as separate batches even when the barcode is the same. The phone and OLED
-share the same BMO mood rules; the physical OLED expressions still require
-verification on the real screen.
+share the same BMO mood rules. The OLED expressions have been tested on the
+physical screen; the complete phone workflow still needs device validation.
+
+The OLED reserves its screen for a blinking BMO face and one compact footer
+with temperature and Cold, Normal, Warm, or No sensor status. A short closed-eye
+wake-up animation plays at startup. Inventory and scan messages stay in the
+phone interface and terminal. Sensor reads run separately from animation;
+the probe's conversion time and physical response still limit how quickly a
+temperature change appears. Warm means above the project's 40 F fridge limit.
 
 On the Raspberry Pi:
 

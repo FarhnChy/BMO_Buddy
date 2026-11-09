@@ -33,7 +33,8 @@ BASE_DIR = Path(__file__).resolve().parent
 DB_PATH = BASE_DIR / "fridge.db"
 TEMP_LOG_PATH = BASE_DIR / "temperature_log.csv"
 
-DISPLAY_REFRESH_SECONDS = 2
+DISPLAY_REFRESH_SECONDS = 0.15
+SENSOR_REFRESH_SECONDS = 1
 TEMPERATURE_LOG_SECONDS = 10
 EXPIRATION_CHECK_SECONDS = 30
 EXPIRING_SOON_DAYS = 3
@@ -106,6 +107,10 @@ class BmoDisplay:
         self.image = None
         self.draw = None
         self.font = None
+        self.started_at = time.monotonic()
+        self.previous_mood: str | None = None
+        self.cold_reaction_until = 0.0
+        self.last_cold_reaction = float("-inf")
 
         try:
             import board
@@ -120,7 +125,10 @@ class BmoDisplay:
 
             self.image = Image.new("1", (128, 64))
             self.draw = ImageDraw.Draw(self.image)
-            self.font = ImageFont.load_default()
+            try:
+                self.font = ImageFont.truetype("DejaVuSans.ttf", 11)
+            except OSError:
+                self.font = ImageFont.load_default()
             self.hardware_ready = True
         except Exception as exc:
             print(f"[display] Terminal mode: OLED unavailable ({exc})")
@@ -155,34 +163,62 @@ class BmoDisplay:
 
         self.draw.rectangle((0, 0, 127, 63), outline=0, fill=0)
 
-        self.draw_bmo_face(mood)
+        now = time.monotonic()
+        elapsed = now - self.started_at
+        waking = elapsed < 2.0
+        # Preserve the startup sequence and avoid retriggering near the boundary.
+        if not waking:
+            if mood == "cold" and self.previous_mood != "cold" and now - self.last_cold_reaction >= 30:
+                self.cold_reaction_until = now + 2.5
+                self.last_cold_reaction = now
+            self.previous_mood = mood
+        reacting = not waking and mood == "cold" and now < self.cold_reaction_until
+        closed_eyes = elapsed < 1.2 or (not waking and elapsed % 5 < 0.18)
+        if reacting:
+            closed_eyes = int(elapsed * 6) % 2 == 0
+        self.draw_bmo_face(mood, closed_eyes=closed_eyes)
 
-        self.draw.text((0, 33), f"{temp_text} {temp_status}", font=self.font, fill=255)
-        self.draw.text((0, 43), f"Items: {inventory_count}  Soon: {expiring_count}", font=self.font, fill=255)
-        self.draw.text((0, 53), message, font=self.font, fill=255)
+        if waking:
+            self.draw_centered_text("BMO waking up...", 49)
+        else:
+            label = {"No sensor": "No sensor", "Too Cold!": "C-C-Cold",
+                     "Normal": "Normal", "Too Warm!": "Warm"}[temp_status]
+            if reacting:
+                label = "Brrr!"
+            self.draw_centered_text(f"{temp_text}  {label}", 49)
 
         self.display.image(self.image)
         self.display.show()
 
-    def draw_bmo_face(self, mood: str) -> None:
+    def draw_centered_text(self, text: str, top: int) -> None:
+        """Fit the footer inside the OLED, including font bearing offsets."""
         assert self.draw is not None
+        assert self.font is not None
+        while text:
+            left, upper, right, bottom = self.draw.textbbox((0, 0), text, font=self.font)
+            if right - left <= 124:
+                break
+            text = text[:-1]
+        self.draw.text(((128 - (right - left)) // 2 - left, top - upper),
+                       text, font=self.font, fill=255)
 
-        if mood == "sleepy":
-            self.draw.line((10, 12, 30, 12), fill=255, width=2)
-            self.draw.line((98, 12, 118, 12), fill=255, width=2)
-            self.draw.line((52, 25, 76, 25), fill=255, width=2)
-        elif mood == "cold":
-            self.draw.rectangle((14, 8, 27, 19), outline=255, fill=0)
-            self.draw.rectangle((101, 8, 114, 19), outline=255, fill=0)
-            self.draw.line((48, 25, 56, 20, 64, 25, 72, 20, 80, 25), fill=255, width=2)
-        elif mood == "worried":
-            self.draw.ellipse((10, 5, 31, 23), outline=255, fill=0)
-            self.draw.ellipse((97, 5, 118, 23), outline=255, fill=0)
-            self.draw.arc((48, 20, 80, 38), 200, 340, fill=255, width=2)
+    def draw_bmo_face(self, mood: str, closed_eyes: bool = False) -> None:
+        assert self.draw is not None
+        # BMO's simple oval eyes and small mouth, with room for one footer.
+        if closed_eyes or mood == "sleepy":
+            self.draw.line((36, 18, 45, 18), fill=255, width=2)
+            self.draw.line((82, 18, 91, 18), fill=255, width=2)
         else:
-            self.draw.rectangle((10, 6, 30, 22), outline=255, fill=0)
-            self.draw.rectangle((98, 6, 118, 22), outline=255, fill=0)
-            self.draw.arc((48, 12, 80, 29), 20, 160, fill=255, width=2)
+            self.draw.ellipse((38, 12, 43, 23), fill=255)
+            self.draw.ellipse((84, 12, 89, 23), fill=255)
+        if mood == "cold":
+            self.draw.line((51, 35, 57, 29, 64, 35, 71, 29, 77, 35), fill=255, width=2)
+        elif mood == "worried":
+            self.draw.arc((55, 31, 73, 41), 190, 350, fill=255, width=2)
+        elif mood == "sleepy":
+            self.draw.line((59, 34, 69, 34), fill=255, width=2)
+        else:
+            self.draw.arc((53, 24, 75, 36), 0, 180, fill=255, width=2)
 
 
 @contextmanager
@@ -700,6 +736,18 @@ def main() -> None:
         )
         listener.start()
 
+    sensor_stop = threading.Event()
+
+    def sample_temperature() -> None:
+        # A DS18B20 read waits for conversion; keep that off the animation loop.
+        while not sensor_stop.is_set():
+            temperature_c = read_temperature_c()
+            with state.lock:
+                state.last_temperature_c = temperature_c
+            sensor_stop.wait(SENSOR_REFRESH_SECONDS)
+
+    sensor_thread = threading.Thread(target=sample_temperature, daemon=True)
+    sensor_thread.start()
     next_temperature_log = 0.0
     next_expiration_check = 0.0
 
@@ -710,9 +758,7 @@ def main() -> None:
                 break
 
             now = time.monotonic()
-            temperature_c = read_temperature_c()
-            with state.lock:
-                state.last_temperature_c = temperature_c
+            temperature_c = state.snapshot()["last_temperature_c"]
 
             if now >= next_temperature_log:
                 log_temperature(datetime.now(), temperature_c)
@@ -727,6 +773,8 @@ def main() -> None:
     except KeyboardInterrupt:
         state.set_message("BMO shutting down")
     finally:
+        sensor_stop.set()
+        sensor_thread.join(timeout=2)
         print(f"{APP_NAME} stopped.")
 
 
