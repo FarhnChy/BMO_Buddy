@@ -1,7 +1,8 @@
 # BMO Fridge Buddy
 
-BMO Fridge Buddy gives a mini fridge an animated BMO-inspired face, live
-temperature monitoring, and a phone-friendly food inventory interface.
+BMO Fridge Buddy is a Raspberry Pi fridge monitor with an animated BMO-inspired
+OLED face, live temperature tracking, and a Flask/SQLite web app for food
+inventory and expiration dates.
 Built with a Raspberry Pi 5, a waterproof DS18B20 probe, a 128 x 64 I2C OLED,
 Python, Flask, and SQLite.
 
@@ -55,7 +56,7 @@ The software implements:
 - Store food quantities and expiration dates in a local SQLite database.
 - Warn about food that is expiring soon.
 - Save temperature history to a CSV file.
-- Graph recent temperature history with a highlighted 32-40 F safe band.
+- Graph recent temperature history with a highlighted 32-40 F configured fridge range.
 - Give BMO sleepy, happy, cold, and worried expressions based on temperature.
 
 ## How it works
@@ -118,14 +119,44 @@ python -m pip install -r requirements-rpi.txt
 python web_app.py
 ```
 
-The terminal prints an address such as `http://192.168.1.25:5000`. Open that
-address from a phone on the same private Wi-Fi. Manual barcode entry and the
+Find the Pi's current address with `hostname -I` in another terminal, then open
+`http://<PI-IP>:5000` from a phone on the same private Wi-Fi. For example, if
+the address is `192.168.50.174`, open `http://192.168.50.174:5000`.
+Manual barcode entry and the
 **Take photo** option work from this local page. The ZXing barcode reader is
 stored in this repository, so the scanner itself loads without internet
 access. Product-name lookup still needs internet and falls back to an editable
 `Unknown item` name when offline. Continuous **Live scan** camera access
 requires a trusted HTTPS certificate because mobile browsers block live camera
 streams on insecure pages.
+
+### Resume after powering off
+
+Before putting the Pi away, type `quit` at the monitor's `scan>` prompt (or
+press Ctrl+C to stop a running web server), then run `sudo shutdown -h now`.
+Wait for shutdown to complete before unplugging power.
+
+When returning, power on the Pi and open a terminal:
+
+```bash
+cd ~/bmo_fridge_buddy
+source .venv/bin/activate
+hostname -I
+python web_app.py
+```
+
+Leave that terminal running and visit `http://<PI-IP>:5000` on your phone.
+The IP address can change after a reboot. To run the OLED and keep recording
+temperature history too, open a second Pi terminal:
+
+```bash
+cd ~/bmo_fridge_buddy
+source .venv/bin/activate
+python bmo_fridge.py
+```
+
+Next device test: open the inventory page and temperature graph. Adding food
+without a barcode is still planned; the current form requires a barcode.
 
 For HTTPS, set paths to a trusted certificate and matching private key before
 starting the server:
