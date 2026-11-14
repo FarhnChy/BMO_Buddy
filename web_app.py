@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import sqlite3
+from uuid import uuid4
 from datetime import datetime
 
 from flask import Flask, jsonify, render_template, request
@@ -78,8 +79,12 @@ def create_app(test_config: dict[str, object] | None = None) -> Flask:
     def add_inventory():
         payload = request.get_json(silent=True) or {}
         barcode = normalize_barcode(payload.get("barcode"))
+        if barcode is None and payload.get("barcode"):
+            return jsonify({"error": "Enter 4 to 18 barcode digits, or leave the barcode blank."}), 400
+        if barcode is None and not str(payload.get("name") or "").strip():
+            return jsonify({"error": "Enter a name for food without a barcode."}), 400
         if barcode is None:
-            return jsonify({"error": "Enter a barcode containing 4 to 18 digits."}), 400
+            barcode = "manual:" + uuid4().hex
 
         expires_on = normalize_expiration(payload.get("expires_on"))
         if expires_on is False:
@@ -112,8 +117,14 @@ def create_app(test_config: dict[str, object] | None = None) -> Flask:
     def update_inventory(item_id: int):
         payload = request.get_json(silent=True) or {}
         barcode = normalize_barcode(payload.get("barcode"))
+        if barcode is None and not payload.get("barcode"):
+            with bmo_fridge.connect_db() as connection:
+                item = connection.execute("SELECT barcode FROM inventory WHERE id = ?", (item_id,)).fetchone()
+            if item is None:
+                return jsonify({"error": "Inventory item was not found."}), 404
+            barcode = item["barcode"] if item["barcode"].startswith("manual:") else "manual:" + uuid4().hex
         if barcode is None:
-            return jsonify({"error": "Enter a barcode containing 4 to 18 digits."}), 400
+            return jsonify({"error": "Enter 4 to 18 barcode digits, or leave the barcode blank."}), 400
 
         name = str(payload.get("name") or "").strip()[:160]
         if not name:

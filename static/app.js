@@ -41,6 +41,32 @@ async function lookupBarcode(barcode = $("#barcode").value) {
   }
 }
 
+// QR food labels contain a JSON object; never open arbitrary scanned URLs.
+async function handleScan(text) {
+  text = text.trim();
+  if (/^[0-9 ]{4,24}$/.test(text)) return lookupBarcode(text);
+  let food;
+  try {
+    food = JSON.parse(text);
+    if (!food || typeof food !== "object" || Array.isArray(food)) throw new Error();
+    if (typeof food.name !== "string" || !food.name.trim() || food.name.length > 160) throw new Error();
+    if (food.barcode && !/^[0-9]{4,18}$/.test(food.barcode)) throw new Error();
+    const quantity = food.quantity ?? 1;
+    if (!Number.isInteger(quantity) || quantity < 1 || quantity > 99) throw new Error();
+    if (food.expires_on && (!/^\d{4}-\d{2}-\d{2}$/.test(food.expires_on) ||
+        !Number.isFinite(Date.parse(food.expires_on)) ||
+        new Date(food.expires_on).toISOString().slice(0, 10) !== food.expires_on)) throw new Error();
+    $("#barcode").value = food.barcode || "";
+    $("#name").value = food.name.trim();
+    $("#quantity").value = quantity;
+    $("#expires-on").value = food.expires_on || "";
+    $("#product-preview").hidden = true;
+    setMessage("Food label scanned. Review the details, then tap Add to fridge.");
+  } catch {
+    setMessage('Unsupported QR label. Use a product barcode or a food QR with name, quantity, and expires_on fields. You can also enter food by name.', true);
+  }
+}
+
 async function startScanner() {
   if (!window.isSecureContext) {
     return setMessage("Live camera access needs HTTPS. You can still type the barcode manually.", true);
@@ -48,6 +74,8 @@ async function startScanner() {
   if (!window.ZXingBrowser) {
     return setMessage("The camera scanner could not load. Check internet access or enter the barcode manually.", true);
   }
+  if (state.scanStarting || state.scanner) return;
+  state.scanStarting = true;
   $("#camera-wrap").hidden = false;
   state.scanLocked = false;
   try {
@@ -58,15 +86,17 @@ async function startScanner() {
       async (result) => {
         if (!result || state.scanLocked) return;
         state.scanLocked = true;
-        $("#barcode").value = result.getText();
         stopScanner();
-        await lookupBarcode(result.getText());
+        await handleScan(result.getText());
       },
     );
-    setMessage("Point the rear camera at the product barcode.");
+    if (state.scanLocked || $("#camera-wrap").hidden) stopScanner();
+    else setMessage("Point the rear camera at a barcode or food QR label.");
   } catch (error) {
     stopScanner();
     setMessage(`Camera could not start: ${error.message}`, true);
+  } finally {
+    state.scanStarting = false;
   }
 }
 
@@ -89,8 +119,7 @@ async function scanPhoto(event) {
   try {
     const reader = new ZXingBrowser.BrowserMultiFormatReader();
     const result = await reader.decodeFromImageUrl(url);
-    $("#barcode").value = result.getText();
-    await lookupBarcode(result.getText());
+    await handleScan(result.getText());
   } catch {
     setMessage("No barcode was found in that photo. Try again in bright light with the entire barcode visible.", true);
   } finally {
@@ -105,7 +134,7 @@ async function loadInventory() {
     updateFilterCounts();
     renderInventory();
   } catch (error) {
-    container.innerHTML = `<div class="empty error">${error.message}</div>`;
+    container.textContent = `Unable to load inventory: ${error.message}. Check that the app server is online, then tap Refresh.`;
   }
 }
 
@@ -113,7 +142,7 @@ function renderInventory() {
   const container = $("#inventory");
   container.replaceChildren();
   if (!state.inventory.length) {
-    container.innerHTML = '<div class="empty"><strong>Your fridge log is empty.</strong><span>Scan your first item above.</span></div>';
+    container.innerHTML = '<div class="empty"><strong>Your fridge log is empty.</strong><span>Scan or add your first item above.</span></div>';
     return;
   }
 
@@ -136,7 +165,7 @@ function renderInventory() {
     const badge = card.querySelector(".date-badge");
     badge.textContent = dateState.label;
     badge.classList.add(dateState.key);
-    card.querySelector("small").textContent = `Barcode ${item.barcode}`;
+    card.querySelector("small").textContent = item.barcode.startsWith("manual:") ? "Added by name" : `Barcode ${item.barcode}`;
     card.querySelector(".quantity").textContent = `x${item.quantity}`;
     card.querySelector(".edit-item").addEventListener("click", () => openEditor(item));
     card.querySelector(".remove-one").addEventListener("click", () => removeItem(item.id, false));
@@ -183,7 +212,7 @@ function setInventoryFilter(filter) {
 
 function openEditor(item) {
   $("#edit-id").value = item.id;
-  $("#edit-barcode").value = item.barcode;
+  $("#edit-barcode").value = item.barcode.startsWith("manual:") ? "" : item.barcode;
   $("#edit-name").value = item.name;
   $("#edit-expires-on").value = item.expires_on || "";
   $("#edit-quantity").value = item.quantity;
@@ -353,17 +382,23 @@ window.addEventListener("resize", () => { if (state.history) drawTemperatureChar
 $("#barcode").addEventListener("input", () => { state.product = null; $("#product-preview").hidden = true; });
 $("#item-form").addEventListener("submit", async (event) => {
   event.preventDefault();
-  const payload = Object.fromEntries(new FormData(event.currentTarget));
+  const form = event.currentTarget;
+  const submit = form.querySelector('[type="submit"]');
+  if (submit.disabled) return;
+  submit.disabled = true;
+  const payload = Object.fromEntries(new FormData(form));
   try {
     const result = await api("/api/inventory", { method: "POST", body: JSON.stringify(payload) });
     setMessage(result.message);
-    event.currentTarget.reset();
+    form.reset();
     $("#quantity").value = 1;
     $("#product-preview").hidden = true;
     await Promise.all([loadInventory(), loadStatus()]);
     $("#barcode").focus();
   } catch (error) {
     setMessage(error.message, true);
+  } finally {
+    submit.disabled = false;
   }
 });
 window.addEventListener("pagehide", stopScanner);

@@ -238,3 +238,15 @@ The project is finished when the real probe reads fridge temperature, the OLED
 shows BMO status, terminal and phone inventory both work, history graphs work,
 backups run, services survive reboot, the hardware is mounted safely, and the
 final code/docs are pushed to GitHub.
+
+
+## Online app follow-up
+
+- [x] Publish a private online inventory app with persistent cloud storage.
+- [x] Support adding and editing food without a barcode, including leftovers.
+- [x] Support food QR labels, barcode scanning, inventory search, and expiry filters.
+- [x] Separate Pi offline status from missing sensor status; hide stale current temperatures.
+- [x] Implement a Pi cloud heartbeat uploader and service template.
+- [ ] Connect the physical Pi uploader with private service credentials and verify real readings.
+- [ ] Validate live scan, photo scan, and save/edit/remove on the owner's phone.
+- [ ] If needed, import existing Pi inventory into the cloud database.

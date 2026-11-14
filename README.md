@@ -6,6 +6,22 @@ inventory and expiration dates.
 Built with a Raspberry Pi 5, a waterproof DS18B20 probe, a 128 x 64 I2C OLED,
 Python, Flask, and SQLite.
 
+## Online app
+
+**[Open BMO Fridge Buddy](https://bmo-fridge-buddy-farha.jollymatch2.chatgpt.site)**
+
+This private online app stays available when the Pi is off. Sign in with the
+owner account. Add food by name, scan barcodes or supported food QR labels,
+track quantities and expiration dates, search, edit, and remove food.
+
+The cloud app has its own persistent database. Existing Pi inventory is not
+automatically imported. Temperature uploads need to be configured on the Pi;
+until then the app shows Pi offline. Actual phone camera validation is pending.
+See [cloud app and Pi connection setup](cloud-app/README.md).
+
+The Flask instructions below describe the separate local Pi version, whose
+links require the Pi to be powered on.
+
 ## Hardware demo
 
 **[Watch or download the recorded startup and hardware demo](docs/media/bmo-hardware-demo.mov)**
@@ -155,8 +171,8 @@ source .venv/bin/activate
 python bmo_fridge.py
 ```
 
-Next device test: open the inventory page and temperature graph. Adding food
-without a barcode is still planned; the current form requires a barcode.
+Next device test: open the inventory page and temperature graph, add a manual
+item, scan a barcode and a food QR label, then edit and remove those items.
 
 For HTTPS, set paths to a trusted certificate and matching private key before
 starting the server:
@@ -212,3 +228,43 @@ bash scripts/enable_tailscale_https.sh
 The command prints the private `https://...ts.net` address to open on the
 phone. Do not enable Tailscale Funnel; this project is intended to remain
 private rather than publicly accessible.
+
+## App availability and adding your own food
+
+The current app is hosted on the Pi. Its local and Tailscale links require the
+Pi to be powered on and the web service running. Installing the services starts
+the app at boot; it does not make the app available while the Pi is off.
+The web app can also run on a computer without sensor or OLED hardware:
+install Flask and Waitress, then run `python web_app.py`. Inventory is stored
+on that computer, separately from the Pi database. No cloud deployment or
+cross-device database synchronization is included.
+
+Leave Barcode blank to add produce, leftovers, or other perishables by name.
+Enter quantity and an optional expiration date. Edit saved items to correct
+names, quantities, or dates; remove one serving or an entire batch. Manual
+entries stay separate so foods with the same name are not accidentally merged.
+Dates are entered by you; ordinary product barcodes do not supply expiration dates.
+
+Live scan and Take photo accept product barcodes and food QR labels. To make a
+food QR label, encode a JSON object such as:
+
+```json
+{"name":"Leftover soup","quantity":2,"expires_on":"2026-11-15"}
+```
+
+An optional `barcode` field can contain 4 to 18 digits. Review scanned details
+before saving. QR codes containing websites or other formats are rejected with
+a message; scanning does not visit their links. Live camera scanning requires
+trusted HTTPS (or localhost on the computer serving the app). Real-phone camera
+validation is still required.
+
+
+## Vercel migration status
+
+A separate [Vercel deployment package](vercel-app/README.md) is prepared with
+the same BMO interface, persistent Postgres storage, private owner sign-in,
+and a device token for temperature uploads. It has no Sites/ChatGPT runtime
+dependency. It is not deployed yet: the Vercel account must be connected and
+the production database and secrets configured first. Existing cloud inventory
+has not been copied. Keep using the current app until the new deployment and
+any inventory import are verified.
