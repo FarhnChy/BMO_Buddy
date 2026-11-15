@@ -3,7 +3,30 @@
 This is the same BMO inventory UI packaged as a static page plus one Vercel
 Node.js Function, using persistent Neon Postgres. It has no Cloudflare or
 ChatGPT runtime dependency. The existing Sites app remains available while the
-Vercel deployment is prepared.
+Vercel version is tried.
+
+## Live deployment
+
+https://bmo-fridge-buddy.vercel.app/fridge
+
+Deployed on November 15, 2026 to Vercel Hobby with a Neon free-plan database.
+The function and database use the iad1 US East region. App secrets are stored
+as Vercel production secrets. This app uses its own owner password, not the
+Vercel account password. The initial generated password is saved locally in
+ignored `.vercel/owner-password.txt`; it is not stored in GitHub.
+
+Live verification passed: anonymous inventory access denied, owner sign-in,
+save to Neon, persistence after reload, edit, remove one, remove batch, sign-out,
+on-demand scanner loading, and layouts at 360, 390, 768 and 1280px. The test
+batch was removed afterward. Existing Sites/Pi inventory was not imported.
+
+One local-to-production sample measured a 597ms page HTTP response and three
+authenticated status requests at 79ms, 67ms and 69ms. These are round-trip
+samples, not full page-load timings or a controlled cold-start benchmark.
+Physical phone-camera scanning and Pi-to-cloud telemetry are still unverified.
+
+Deployment installs production dependencies only. `.vercelignore` excludes
+local environment files, test results, dependency folders, and `.vercel` state.
 
 ## Deploy
 

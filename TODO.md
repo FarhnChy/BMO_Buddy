@@ -250,3 +250,14 @@ final code/docs are pushed to GitHub.
 - [ ] Connect the physical Pi uploader with private service credentials and verify real readings.
 - [ ] Validate live scan, photo scan, and save/edit/remove on the owner's phone.
 - [ ] If needed, import existing Pi inventory into the cloud database.
+
+
+## Vercel trial deployment ? November 15, 2026
+
+- [x] Deploy https://bmo-fridge-buddy.vercel.app/fridge with free Neon Postgres.
+- [x] Configure private owner sign-in, session secret, and separate Pi upload token.
+- [x] Verify production save/edit/remove, reload persistence, sign-out, and denied anonymous inventory access.
+- [x] Check live browser layouts at 360, 390, 768, and 1280px; test data removed.
+- [ ] Validate real-phone live camera and photo scanning.
+- [ ] Connect and verify the physical Pi uploader.
+- [ ] Import original inventory if needed before treating Vercel as the replacement.

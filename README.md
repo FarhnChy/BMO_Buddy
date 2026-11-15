@@ -8,6 +8,16 @@ Python, Flask, and SQLite.
 
 ## Online app
 
+**[Try BMO Fridge Buddy on Vercel](https://bmo-fridge-buddy.vercel.app/fridge)**
+
+The Vercel version is deployed with Neon Postgres and a private owner password.
+Its inventory is separate from the original site and the Pi. Live checks passed
+for sign-in, saving, persistence after refresh, editing, removal, sign-out, and
+browser layouts from 360 to 1280 pixels. Physical phone-camera testing and the
+Pi temperature connection are still pending. See [Vercel setup](vercel-app/README.md).
+
+The original site remains available:
+
 **[Open BMO Fridge Buddy](https://bmo-fridge-buddy-farha.jollymatch2.chatgpt.site)**
 
 This private online app stays available when the Pi is off. Sign in with the
@@ -229,15 +239,15 @@ The command prints the private `https://...ts.net` address to open on the
 phone. Do not enable Tailscale Funnel; this project is intended to remain
 private rather than publicly accessible.
 
-## App availability and adding your own food
+## Local app availability and adding your own food
 
-The current app is hosted on the Pi. Its local and Tailscale links require the
+The local Flask app is hosted on the Pi. Its local and Tailscale links require the
 Pi to be powered on and the web service running. Installing the services starts
 the app at boot; it does not make the app available while the Pi is off.
 The web app can also run on a computer without sensor or OLED hardware:
 install Flask and Waitress, then run `python web_app.py`. Inventory is stored
-on that computer, separately from the Pi database. No cloud deployment or
-cross-device database synchronization is included.
+on that computer, separately from the Pi database. This local mode does not synchronize
+with either hosted inventory database.
 
 Leave Barcode blank to add produce, leftovers, or other perishables by name.
 Enter quantity and an optional expiration date. Edit saved items to correct
@@ -261,10 +271,9 @@ validation is still required.
 
 ## Vercel migration status
 
-A separate [Vercel deployment package](vercel-app/README.md) is prepared with
-the same BMO interface, persistent Postgres storage, private owner sign-in,
+The [Vercel version](https://bmo-fridge-buddy.vercel.app/fridge) is deployed with
+the same BMO interface, persistent Neon Postgres storage, private owner sign-in,
 and a device token for temperature uploads. It has no Sites/ChatGPT runtime
-dependency. It is not deployed yet: the Vercel account must be connected and
-the production database and secrets configured first. Existing cloud inventory
-has not been copied. Keep using the current app until the new deployment and
-any inventory import are verified.
+dependency. The production inventory workflow has been checked in a browser.
+Existing Sites/Pi inventory has not been copied, and the original site remains
+available while the Vercel version is tried. See [deployment notes](vercel-app/README.md).

@@ -44,5 +44,6 @@
         }
       ]
     }
-  ]
+  ],
+  "installCommand": "npm ci --omit=dev"
 }
