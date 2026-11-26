@@ -1,0 +1,16 @@
+[Unit]
+Description=BMO Fridge Buddy cloud temperature uploader
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=@USER@
+WorkingDirectory=@PROJECT_DIR@
+EnvironmentFile=@PROJECT_DIR@/.env.cloud
+ExecStart=@PROJECT_DIR@/.venv/bin/python @PROJECT_DIR@/cloud_uploader.py
+Restart=always
+RestartSec=15
+
+[Install]
+WantedBy=multi-user.target

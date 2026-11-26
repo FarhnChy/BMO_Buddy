@@ -13,8 +13,11 @@ tests/.temperature_history.csv
 .venv/
 venv/
 .env
+.env.*
 .idea/
 .vscode/
 
 # Local hardware inspection photos
 .tmp_hardware_photos/
+
+.tmp_bmo_references/

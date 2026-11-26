@@ -108,6 +108,28 @@ class WebAppTest(unittest.TestCase):
         self.assertEqual(updated["quantity"], 3)
         self.assertEqual(updated["expires_on"], "2026-08-15")
 
+    def test_manual_food_lifecycle_and_separate_batches(self):
+        food = {"name": "Leftover soup", "quantity": 2, "expires_on": "2026-11-15"}
+        with patch.object(bmo_fridge, "fetch_product_name") as lookup:
+            self.assertEqual(self.client.post("/api/inventory", json=food).status_code, 201)
+            self.assertEqual(self.client.post("/api/inventory", json=food).status_code, 201)
+            lookup.assert_not_called()
+        items = self.client.get("/api/inventory").get_json()
+        self.assertEqual(len(items), 2)
+        item = items[0]
+        response = self.client.patch(f"/api/inventory/{item['id']}", json={**food, "barcode": "", "name": "Soup", "quantity": 1})
+        self.assertEqual(response.status_code, 200)
+        updated = next(row for row in self.client.get("/api/inventory").get_json() if row["id"] == item["id"])
+        self.assertEqual(updated["barcode"], item["barcode"])
+        self.assertEqual(updated["name"], "Soup")
+        self.assertEqual(updated["quantity"], 1)
+        self.assertEqual(self.client.delete(f"/api/inventory/{item['id']}?all=1").status_code, 200)
+        self.assertEqual(len(self.client.get("/api/inventory").get_json()), 1)
+
+    def test_manual_food_requires_name_and_valid_date(self):
+        for payload in ({}, {"name": "Soup", "expires_on": "2026-02-30"}, {"name": "Soup", "quantity": 0}):
+            self.assertEqual(self.client.post("/api/inventory", json=payload).status_code, 400)
+
     def test_migrates_existing_inventory_without_losing_items(self):
         self.db_path.unlink(missing_ok=True)
         with closing(sqlite3.connect(self.db_path)) as connection:

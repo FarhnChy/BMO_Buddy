@@ -21,7 +21,7 @@
 
       <section class="panel scan-panel">
         <div class="section-heading">
-          <div><p class="eyebrow">Add food</p><h2>Scan a barcode</h2></div>
+          <div><p class="eyebrow">Add food</p><h2>Scan a barcode or QR code</h2></div>
           <div class="scan-actions">
             <button id="start-scan" class="primary">Live scan</button>
             <label class="secondary file-button">Take photo<input id="barcode-photo" type="file" accept="image/*" capture="environment"></label>
@@ -32,9 +32,9 @@
           <div class="scan-guide"></div>
           <button id="stop-scan" class="secondary">Close camera</button>
         </div>
-        <p id="camera-note" class="note">Live scanning requires permission and HTTPS. Taking a barcode photo or typing its digits also works.</p>
+        <p id="camera-note" class="note">Live scanning requires permission and HTTPS. Taking a photo also works. Add produce or leftovers by name without a barcode. QR food labels can fill in the form for review.</p>
         <form id="item-form">
-          <label>Barcode<input id="barcode" name="barcode" inputmode="numeric" autocomplete="off" placeholder="Scan or type the digits" required></label>
+          <label>Barcode (optional)<input id="barcode" name="barcode" inputmode="numeric" autocomplete="off" placeholder="Leave blank for produce or leftovers"></label>
           <button id="lookup" type="button" class="secondary">Look up product</button>
           <div id="product-preview" class="product-preview" hidden>
             <img id="product-image" alt="" hidden>
@@ -66,7 +66,7 @@
             <span>The graph will appear after the real sensor records readings.</span>
           </div>
         </div>
-        <div class="chart-legend"><span><i class="safe-key"></i>Safe range 32-40 F</span><span id="chart-summary">No readings yet</span></div>
+        <div class="chart-legend"><span><i class="safe-key"></i>Configured range 32-40 F</span><span id="chart-summary">No readings yet</span></div>
       </section>
 
       <section class="panel inventory-panel">
@@ -95,7 +95,7 @@
       <form id="edit-form">
         <div class="dialog-heading"><div><p class="eyebrow">Inventory</p><h2>Edit item</h2></div><button id="close-edit" type="button" class="icon-button" aria-label="Close">×</button></div>
         <input id="edit-id" type="hidden">
-        <label>Barcode<input id="edit-barcode" inputmode="numeric" required></label>
+        <label>Barcode (optional)<input id="edit-barcode" inputmode="numeric"></label>
         <label>Item name<input id="edit-name" maxlength="160" required></label>
         <div class="form-row">
           <label>Expiration date<input id="edit-expires-on" type="date"></label>

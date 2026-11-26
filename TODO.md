@@ -4,7 +4,45 @@ Use this file when restarting the hardware work, likely Saturday/Sunday. The
 software is implemented; what remains is hardware hookup, real-device testing,
 service install, and final cleanup.
 
-## Weekend Restart Notes
+## Saved session: September 7, 2026
+
+**Update, November 8, 2026:** The hardware steps below are historical. The probe
+now returns valid readings and responds to warming/cooling. The OLED is wired,
+detected at `0x3C`, and running the compact animated face and temperature footer.
+The user confirmed blinking and expression changes and recorded demo footage.
+See the main README for the current showcase and `docs/media/` for the recording.
+Next: validate the phone inventory workflow, check history, compare against a
+reference thermometer, and complete extended logging. The saved setup notes
+below remain for wiring context.
+
+Paused at the user's request until the Pi power supply/cable is available.
+
+- Gikfun pluggable probe-and-adapter kit received. Photos show the adapter's
+  GND/DAT/VCC labels and onboard resistor, and the probe plugged into its socket.
+- Three female-to-female jumpers connected directly from adapter to Pi:
+  blue VCC to physical pin 1 (3.3 V), black GND to physical pin 6, and white
+  DAT to physical pin 7 (GPIO4).
+- Wiring appears consistent in the photos; connector housings partly obscure
+  the Pi pins. No powered sensor test has been performed.
+- OLED is not connected. No breadboard or separate resistor is used.
+
+**Resume here when power is available:** With the Pi still unplugged, confirm
+  the three connections above have not shifted. Power up, open a terminal on
+  the Pi, run `sudo raspi-config`, and enable Interface Options -> 1-Wire.
+  Reboot, then run:
+
+```bash
+cat /sys/bus/w1/devices/28-*/w1_slave
+```
+
+Check for `YES` and a sensible room-temperature value (`t=22500` means 22.5 C).
+If the device is missing, troubleshoot before adding the OLED; unplug power
+before changing any wiring. Once the sensor works, connect/test the OLED,
+verify BMO/logging/inventory, position the probe in the fridge, and verify
+services/backups and several hours of logging. Allow roughly 1.5-3 hours of
+remaining hands-on work if testing goes smoothly, plus the logging period.
+
+## Historical weekend restart instructions
 
 Start with the temperature sensor only. Do not wire the OLED or install
 services until the DS18B20 probe is reading real values from the Pi.
@@ -31,7 +69,31 @@ Suggested order:
 Stop before moving on if the Pi does not show a `28-...` device. That means the
 issue is wiring, 1-Wire config, the adapter, or the probe, not the app code.
 
-## Finish Checklist
+## Implementation and hardware progress
+
+- [x] Raspberry Pi boots and its fan issue is resolved.
+- [x] Project repository exists on GitHub.
+- [x] Code is cloned onto the Raspberry Pi.
+- [x] Python virtual environment and project dependencies are installed.
+- [x] `bmo_fridge.py` runs in terminal mode without hardware connected.
+- [x] Invalid expiration dates now prompt again.
+- [x] Closed terminal input now requests a clean application shutdown.
+- [x] Phone-friendly inventory web app supports barcode lookup, expiration dates, quantities, and removal.
+- [x] Phone scanner supports live camera scanning over HTTPS and a barcode-photo fallback.
+- [x] Inventory editing and expiration filters are implemented.
+- [x] Barcode recognition is bundled for offline use.
+- [x] Automatic startup, verified daily backups, and private HTTPS setup are implemented.
+- [x] Read-only temperature graphs and shared phone/OLED BMO moods are implemented.
+- [x] Verify temperature expressions and the revised layout on the physical OLED.
+- [ ] Install and verify the automatic services and HTTPS flow on the Raspberry Pi and phone.
+- [x] Receive and inspect the OLED screens and original bare-wire DS18B20 probes.
+- [x] Receive Gikfun pluggable probe kit; inspect visible labels, connector, and onboard resistor in photos.
+- [x] Connect the probe and adapter to the Pi with three female-to-female jumpers (photo review only).
+- [x] Power on, enable 1-Wire, and test the temperature sensor.
+- [x] Connect and test the OLED.
+- [ ] Test the full inventory workflow and finish the physical build.
+
+## Finish Checklist (original procedure)
 
 1. **Inspect the Gikfun DS18B20 kit**
    - [ ] Pi is shut down and unplugged.
@@ -176,3 +238,26 @@ The project is finished when the real probe reads fridge temperature, the OLED
 shows BMO status, terminal and phone inventory both work, history graphs work,
 backups run, services survive reboot, the hardware is mounted safely, and the
 final code/docs are pushed to GitHub.
+
+
+## Online app follow-up
+
+- [x] Publish a private online inventory app with persistent cloud storage.
+- [x] Support adding and editing food without a barcode, including leftovers.
+- [x] Support food QR labels, barcode scanning, inventory search, and expiry filters.
+- [x] Separate Pi offline status from missing sensor status; hide stale current temperatures.
+- [x] Implement a Pi cloud heartbeat uploader and service template.
+- [ ] Connect the physical Pi uploader with private service credentials and verify real readings.
+- [ ] Validate live scan, photo scan, and save/edit/remove on the owner's phone.
+- [ ] If needed, import existing Pi inventory into the cloud database.
+
+
+## Vercel trial deployment ? November 15, 2026
+
+- [x] Deploy https://bmo-fridge-buddy.vercel.app/fridge with free Neon Postgres.
+- [x] Configure private owner sign-in, session secret, and separate Pi upload token.
+- [x] Verify production save/edit/remove, reload persistence, sign-out, and denied anonymous inventory access.
+- [x] Check live browser layouts at 360, 390, 768, and 1280px; test data removed.
+- [ ] Validate real-phone live camera and photo scanning.
+- [ ] Connect and verify the physical Pi uploader.
+- [ ] Import original inventory if needed before treating Vercel as the replacement.
