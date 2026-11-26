@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="/styles.css">
     <link rel="manifest" href="/manifest.json">
   </head>
-  <body><div id="login-panel" class="login-panel" hidden><form id="login-form" class="panel"><p class="eyebrow">BMO Fridge Buddy</p><h1>Open your fridge</h1><p>Sign in to your private food log.</p><label>Password<input id="login-password" type="password" autocomplete="current-password" required></label><button type="submit" class="primary wide">Sign in</button><p id="login-message" class="message" role="status"></p></form></div><div id="app-content" hidden>
+  <body><div id="login-panel" class="login-panel" hidden><form id="login-form" class="panel"><p class="eyebrow">BMO Fridge Buddy</p><h1>Open your fridge</h1><p>Try a sample fridge, or sign in to your own.</p><label>Password<input id="login-password" type="password" autocomplete="current-password" required></label><button type="submit" class="primary wide">Sign in</button><button type="button" id="guest-start" class="secondary wide">Continue as guest</button><p class="note">Guest food stays in this browser and is separate from the owner?s fridge.</p><p id="login-message" class="message" role="status"></p></form></div><div id="app-content" hidden><div id="guest-banner" class="guest-banner" hidden>Guest mode ? Sample fridge. Changes stay in this browser.</div>
     <main class="shell">
       <header class="hero">
         <div id="bmo-face" class="face sleepy" role="img" aria-label="BMO is waiting for the temperature sensor"><img class="bmo-expression bmo-happy" src="/bmo/happy.jpg" alt="" width="768" height="576"><img class="bmo-expression bmo-relaxed" src="/bmo/relaxed.jpg" alt="" width="800" height="600"><img class="bmo-expression bmo-worried" src="/bmo/worried.jpg" alt="" width="768" height="576"><div class="bmo-buttons" aria-hidden="true"><b></b><em></em><em></em></div></div>
@@ -110,6 +110,6 @@
     </dialog>
 
 
-    <script defer src="/magic-ui.js"></script><script src="/app.js"></script><script src="/login.js"></script>
+    <script defer src="/magic-ui.js"></script><script src="/guest.js"></script><script src="/app.js"></script><script src="/login.js"></script>
   </div></body>
 </html>

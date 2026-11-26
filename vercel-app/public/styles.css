@@ -94,3 +94,5 @@ button:focus-visible, .file-button:focus-within { outline:3px solid #5da998; out
   .art-credit { order:4; }
 }
 @media (prefers-reduced-motion:reduce) { *, *::before, *::after { transition-duration:.01ms !important; animation-duration:.01ms !important; } }
+
+.guest-banner { padding:10px 16px; text-align:center; background:#d9f1e7; color:#193631; font-size:.9rem; font-weight:650; }

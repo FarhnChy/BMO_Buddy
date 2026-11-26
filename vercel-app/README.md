@@ -28,6 +28,12 @@ Physical phone-camera scanning and Pi-to-cloud telemetry are still unverified.
 Deployment installs production dependencies only. `.vercelignore` excludes
 local environment files, test results, dependency folders, and `.vercel` state.
 
+## Guest mode and owner access
+
+Visitors can choose **Continue as guest** to try a sample fridge without a password. Guest inventory stays in that browser's local storage and is separate from the owner database. The temperature graph is sample data, and product lookup is unavailable in guest mode. Clearing browser data removes the guest inventory.
+
+If the owner password is lost, generate a new password hash using `scripts/configure.py`, replace `BMO_OWNER_PASSWORD_HASH` in the Vercel project environment, and redeploy. Keep the existing database URL, session secret, and device token unchanged. This resets owner access without deleting inventory. Never share the password or hash in screenshots or chat.
+
 ## Deploy
 
 1. Connect Vercel to this workspace/account, then create/import a project with

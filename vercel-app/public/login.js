@@ -4,10 +4,13 @@ function showSignIn() {
   stopScanner(); appContent.hidden = true; loginPanel.hidden = false;
 }
 function showApp() {
+  document.querySelector("#guest-banner").hidden = !window.bmoGuestMode;
+  document.querySelector("#sign-out").textContent = window.bmoGuestMode ? "Exit guest mode" : "Sign out";
   loginPanel.hidden = true; appContent.hidden = false;
   document.dispatchEvent(new Event('bmo:signed-in'));
 }
 document.addEventListener('bmo:signed-out', showSignIn);
+document.querySelector('#guest-start').addEventListener('click', () => { window.bmoGuestMode = true; showApp(); });
 document.querySelector('#login-form').addEventListener('submit', async event => {
   event.preventDefault();
   const button = event.currentTarget.querySelector('button');
@@ -18,12 +21,13 @@ document.querySelector('#login-form').addEventListener('submit', async event => 
     const response = await fetch('/api/login', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({password:password.value}) });
     const result = await response.json();
     if (!response.ok) throw new Error(result.error || 'Sign-in failed.');
-    password.value = ''; message.textContent = ''; showApp();
+    window.bmoGuestMode = false; password.value = ''; message.textContent = ''; showApp();
   } catch(error) { message.textContent = error.message; }
   finally { button.disabled = false; }
 });
 document.querySelector('#sign-out').addEventListener('click', async () => {
   try {
+    if (window.bmoGuestMode) { window.bmoGuestMode = false; state.inventory = []; document.querySelector('#inventory').replaceChildren(); showSignIn(); return; }
     const response = await fetch('/api/logout', { method:'POST' });
     if (!response.ok) throw new Error('Sign-out failed.');
     state.inventory = []; document.querySelector('#inventory').replaceChildren(); showSignIn();

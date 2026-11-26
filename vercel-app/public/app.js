@@ -2,6 +2,7 @@ const $ = (selector) => document.querySelector(selector);
 const state = { scanner: null, scanLocked: false, product: null, inventory: [], filter: "all", history: null, historyHours: 24 };
 
 async function api(path, options = {}) {
+  if (window.bmoGuestMode) return window.bmoGuestApi(path, options);
   const response = await fetch(path, {
     headers: { "Content-Type": "application/json", ...(options.headers || {}) },
     ...options,
@@ -251,7 +252,7 @@ async function removeItem(id, all) {
 async function loadStatus() {
   try {
     const status = await api("/api/status");
-    const temperature = !status.pi_online ? "Pi offline - inventory is available" : status.temperature_f === null ? "No temperature sensor" : `${status.temperature_f}°F · ${status.temperature_status}`;
+    const temperature = window.bmoGuestMode ? "Sample temperature: 37?F" : !status.pi_online ? "Pi offline - inventory is available" : status.temperature_f === null ? "No temperature sensor" : `${status.temperature_f}°F · ${status.temperature_status}`;
     $("#status-line").textContent = `${temperature} · ${status.inventory_count} items · ${status.expiring_count} expiring soon`;
     const face = $("#bmo-face");
     face.className = `face ${status.bmo_mood}`;
