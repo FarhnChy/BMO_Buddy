@@ -7,12 +7,19 @@
     "node": "24.x"
   },
   "scripts": {
-    "build": "node scripts/check.mjs",
+    "build": "esbuild ui/entry.tsx --bundle --minify --outfile=public/magic-ui.js && tailwindcss -i ui/magic.css -o public/magic-ui.css --minify && node scripts/check.mjs",
     "test": "node --test tests/*.test.mjs",
     "db:migrate": "node --env-file=.env.local scripts/migrate.mjs"
   },
   "dependencies": {
-    "@neondatabase/serverless": "^1.0.0"
+    "@neondatabase/serverless": "^1.0.0",
+    "@tailwindcss/cli": "^4.3.5",
+    "clsx": "^2.1.1",
+    "esbuild": "^0.28.2",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "tailwind-merge": "^3.7.1",
+    "tailwindcss": "^4.3.5"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.3.0",

@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#62b9aa">
     <title>BMO Fridge Buddy</title>
+    <link rel="stylesheet" href="/magic-ui.css">
     <link rel="stylesheet" href="/styles.css">
     <link rel="manifest" href="/manifest.json">
   </head>
@@ -15,13 +16,13 @@
         <div>
           <p class="eyebrow">BMO Fridge Buddy</p>
           <h1>What’s in the fridge?</h1>
-          <p class="note">Your food log stays available when the Pi is off.</p><p id="status-line">Loading fridge status…</p>
+          <p class="note">Keep track of what you have and how your fridge is doing.</p><p id="status-line">Loading fridge status…</p>
         </div>
       </header>
 
       <section class="panel scan-panel">
         <div class="section-heading">
-          <div><p class="eyebrow">Add food</p><h2>Scan a barcode or QR code</h2></div>
+          <div><p class="eyebrow">Add food</p><h2>Stock your fridge</h2></div>
           <div class="scan-actions">
             <button id="start-scan" class="primary">Live scan</button>
             <label class="secondary file-button">Take photo<input id="barcode-photo" type="file" accept="image/*" capture="environment"></label>
@@ -45,7 +46,7 @@
             <label>Expiration date<input id="expires-on" name="expires_on" type="date"></label>
             <label>Quantity<input id="quantity" name="quantity" type="number" min="1" max="99" value="1" required></label>
           </div>
-          <button type="submit" class="primary wide">Add to fridge</button>
+          <div id="add-button-root"><button type="submit" class="primary wide">Add to fridge</button></div>
         </form>
         <p id="form-message" class="message" role="status"></p>
       </section>
@@ -109,6 +110,6 @@
     </dialog>
 
 
-    <script src="/app.js"></script><script src="/login.js"></script>
+    <script defer src="/magic-ui.js"></script><script src="/app.js"></script><script src="/login.js"></script>
   </div></body>
 </html>
