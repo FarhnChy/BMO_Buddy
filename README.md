@@ -1,31 +1,43 @@
 # BMO Fridge Buddy
 
-BMO Fridge Buddy is a Raspberry Pi project that turns a mini fridge into a
-simple smart fridge monitor inspired by BMO from *Adventure Time*.
+BMO Fridge Buddy is a Raspberry Pi fridge monitor and food tracker with an
+animated OLED face. I wanted to combine hardware and software in something
+useful and fun: a little fridge assistant inspired by BMO from *Adventure Time*.
 
-I wanted to build this project to learn more about Raspberry Pi hardware,
-Python, sensors, displays, databases, and working with real electronic
-components. It also gives the mini fridge a fun BMO-style face while making it
-more useful.
+[GitHub repository](https://github.com/FarhnChy/BMO_Buddy) · Public demo: planned
 
-The finished project will:
+- Monitor fridge temperature with a waterproof probe.
+- Give BMO different expressions for temperature readings on an OLED.
+- Track food inventory and expiration dates in a phone-friendly web app.
 
-- Read the fridge temperature with a Gikfun EK1183 waterproof DS18B20 probe and
-  adapter module.
-- Show a BMO face, temperature, and fridge status on an OLED screen.
-- Report whether the fridge is too cold, normal, or too warm.
-- Accept barcodes typed manually, scanned with a phone, or scanned from an
-  optional USB scanner.
-- Look up product names using Open Food Facts.
-- Store food quantities and expiration dates in a local SQLite database.
-- Warn about food that is expiring soon.
-- Save temperature history to a CSV file.
-- Graph recent temperature history with a highlighted 32-40 F safe band.
-- Give BMO sleepy, happy, cold, and worried expressions based on temperature.
+**Status:** The software is in progress. The probe, OLED, and end-to-end Pi
+setup still need real-device testing; see [TODO.md](TODO.md). A public,
+password-free demo is planned but is not available yet.
 
-The main application is [bmo_fridge.py](bmo_fridge.py). Current progress,
-remaining setup, wiring, testing, and update instructions are in
-[TODO.md](TODO.md).
+## Demo
+
+Hardware photo and OLED reaction GIF coming after the prototype is tested.
+Dashboard, inventory, and temperature graph screenshots will follow as the web
+app is tested and polished.
+
+## How it works
+
+The Python monitor is designed to read a DS18B20 temperature probe, show the
+temperature and BMO's expression on an I2C OLED, and save readings to a CSV
+file. The Flask app uses SQLite for inventory, supports barcode lookup through
+Open Food Facts, and graphs recent temperature history. Optional systemd
+services start the monitor and web app on the Pi and back up the database.
+
+The main application is [bmo_fridge.py](bmo_fridge.py); the web server is
+[web_app.py](web_app.py). The stack includes Raspberry Pi, Python, Flask,
+SQLite, an I2C OLED, and a 1-Wire temperature probe.
+
+## What I'm working on
+
+I still need to verify the hardware and the full inventory workflow, capture
+the project in action, and make a public demo that recruiters can try without
+a password. The demo should use separate sample data rather than exposing the
+home fridge or its inventory.
 
 ## Phone inventory and barcode scanner
 
